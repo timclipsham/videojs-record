@@ -63,7 +63,7 @@
         /**
          * Setup recording engine.
          */
-        setup: function(stream, mediaType, debug)
+        setup: function(stream, mediaType, debug, optionsOverride)
         {
             this.inputStream = stream;
             this.mediaType = mediaType;
@@ -81,6 +81,10 @@
             // animated gif settings
             this.engine.quality = this.quality;
             this.engine.frameRate = this.frameRate;
+
+            // override any options
+            this.engine.video = optionsOverride && optionsOverride.video;
+            this.engine.canvas = optionsOverride && optionsOverride.canvas;
 
             // connect stream to recording engine
             this.engine.addStream(this.inputStream);
@@ -169,7 +173,7 @@
         /**
          * Setup recording engine.
          */
-        setup: function(stream, mediaType, debug)
+        setup: function(stream, mediaType, debug, optionsOverride)
         {
             this.inputStream = stream;
             this.mediaType = mediaType;
@@ -279,7 +283,7 @@
     {
         /**
          * The constructor function for the class.
-         * 
+         *
          * @param {videojs.Player|Object} player
          * @param {Object} options Player options.
          */
@@ -294,6 +298,8 @@
             this.recordVideo = this.options_.options.video;
             this.recordAnimation = this.options_.options.animation;
             this.maxLength = this.options_.options.maxLength;
+            this.getUserMediaContraintsOverride = this.options_.options.getUserMediaContraintsOverride;
+            this.recordEngineOptionsOverride = this.options_.options.recordEngineOptionsOverride;
             this.debug = this.options_.options.debug;
 
             // audio settings
@@ -483,7 +489,7 @@
                         video: true
                     };
                     this.getUserMedia(
-                        this.mediaType,
+                        this.getUserMediaContraintsOverride || this.mediaType,
                         this.onDeviceReady.bind(this),
                         this.onDeviceError.bind(this));
                     break;
@@ -495,7 +501,7 @@
                         video: true
                     };
                     this.getUserMedia(
-                        this.mediaType,
+                        this.getUserMediaContraintsOverride || this.mediaType,
                         this.onDeviceReady.bind(this),
                         this.onDeviceError.bind(this));
                     break;
@@ -508,7 +514,7 @@
                         video: false,
                         gif: true
                     };
-                    this.getUserMedia({
+                    this.getUserMedia(this.getUserMediaContraintsOverride || {
                             audio: false,
                             video: true
                         },
@@ -583,7 +589,7 @@
                 this.engine.quality = this.animationQuality;
                 this.engine.frameRate = this.animationFrameRate;
 
-                this.engine.setup(this.stream, this.mediaType, !this.debug);
+                this.engine.setup(this.stream, this.mediaType, !this.debug, this.recordEngineOptionsOverride);
 
                 // show elements that should never be hidden in animation,
                 // audio and/or video modus
@@ -791,8 +797,7 @@
                 // use MediaStream.stop in browsers other than Chrome for now
                 // This will be deprecated in Firefox 44 (see
                 // https://www.fxsitecompat.com/en-US/docs/2015/mediastream-stop-has-been-deprecated/
-                // https://bugzilla.mozilla.org/show_bug.cgi?id=1103188#c106 and
-                // https://bugzilla.mozilla.org/show_bug.cgi?id=1192170)
+                // and https://bugzilla.mozilla.org/show_bug.cgi?id=1103188#c106)
                 if (!this.isChrome())
                 {
                     if (this.getRecordType() === this.AUDIO_ONLY)
@@ -1104,7 +1109,7 @@
 
         /**
          * Start loading data.
-         * 
+         *
          * @param {String|Blob|File} url Either the URL of the media file,
          *     or a Blob or File object.
          */
@@ -1253,7 +1258,7 @@
         },
 
         /**
-         * 
+         *
          */
         startVideoPreview: function()
         {
@@ -1369,10 +1374,10 @@
 
         /**
          * Format seconds as a time string, H:MM:SS, M:SS or M:SS:MMM.
-         * 
+         *
          * Supplying a guide (in seconds) will force a number of leading zeros
          * to cover the length of the guide.
-         * 
+         *
          * @param {Number} seconds Number of seconds to be turned into a string
          * @param {Number} guide Number (in seconds) to model the string after
          * @return {String} Time formatted as H:MM:SS, M:SS or M:SS:MMM.
